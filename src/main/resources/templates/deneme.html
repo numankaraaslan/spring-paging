@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>SomeData List</title>
+<link rel="stylesheet" th:href="@{/css/bootstrap.min.css}" />
+</head>
+<body>
+	<div class="container py-4">
+
+		<!-- Page Title -->
+		<div class="d-flex justify-content-between align-items-center mb-3">
+			<h2 class="mb-0">Dynamic paging with search</h2>
+		</div>
+
+		<!-- Filter Card -->
+		<div class="card mb-3">
+			<div class="card-header bg-dark text-white">Filter</div>
+			<div class="card-body">
+				<form action="/" method="get" th:object="${searchdata}">
+					<div class="row g-3 align-items-end">
+
+						<!-- Name contains -->
+						<div class="col-md-3 form-floating">
+							<input type="text" class="form-control" id="name"
+								th:field="*{name}" placeholder="Name" /> <label for="name">Name</label>
+						</div>
+
+						<!-- Min ID -->
+						<div class="col-md-2 form-floating">
+							<input type="number" class="form-control" id="minId"
+								th:field="*{minId}" placeholder="Min ID" min="0" /> <label
+								for="minId">Min ID</label>
+						</div>
+
+						<!-- Max ID -->
+						<div class="col-md-2 form-floating">
+							<input type="number" class="form-control" id="maxId"
+								th:field="*{maxId}" placeholder="Max ID" min="0" /> <label
+								for="maxId">Max ID</label>
+						</div>
+
+						<!-- Sort -->
+						<div class="col-md-3">
+							<label class="form-label mb-1" for="sort">Sort by</label> <select
+								class="form-select" id="sort" th:field="*{sort}">
+								<option value="">Select</option>
+								<option value="idAsc">ID ↑</option>
+								<option value="idDesc">ID ↓</option>
+								<option value="nameAsc">Name A–Z</option>
+								<option value="nameDesc">Name Z–A</option>
+							</select>
+						</div>
+
+						<!-- Page size -->
+						<div class="col-md-2">
+							<label class="form-label mb-1" for="pageSize">Items per
+								page</label> <select class="form-select" id="pageSize"
+								th:field="*{pageSize}">
+								<option value="10">10</option>
+								<option value="25">25</option>
+								<option value="50">50</option>
+								<option value="100">100</option>
+							</select>
+						</div>
+					</div>
+
+					<div class="row mt-3">
+						<div class="col d-flex justify-content-end gap-2">
+							<a href="/" class="btn btn-outline-secondary">Reset</a>
+							<button type="submit" class="btn btn-primary">Search</button>
+						</div>
+					</div>
+
+				</form>
+			</div>
+		</div>
+
+		<!-- Total Count -->
+		<div class="d-flex justify-content-between align-items-center mb-2">
+			<div class="fw-bold fs-5 text-dark">
+				<span th:text="${'Found ' + allItemsCount + ' records'}"></span>
+			</div>
+		</div>
+
+		<!-- Table -->
+		<div class="table-responsive">
+			<table
+				class="table table-striped table-bordered table-hover align-middle">
+				<thead class="table-dark">
+					<tr>
+						<th scope="col" class="text-center">ID</th>
+						<th scope="col">Name</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="item : ${items}">
+						<td class="text-center" th:text="${item.id}"></td>
+						<td th:text="${item.name}"></td>
+					</tr>
+					<tr th:if="${#lists.isEmpty(items)}">
+						<td colspan="2" class="text-center text-muted">Empty list</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<!-- Pagination -->
+		<nav class="shadow bg-light mt-3"
+			th:if="${page_count} != null AND ${page_count} > 1"
+			th:with="pageNumber = ${param.pg} != null ? ${param.pg[0]} : 1">
+
+			<!-- 1..N (N <= 8) -->
+			<ul th:if="${page_count} <= 8"
+				class="pagination justify-content-center pt-2 pb-2">
+				<li class="page-item pe-2"
+					th:if="${pageNumber} > 1"><a
+					class="page-link"
+					th:href="'?pg=' + (${pageNumber} - 1) + ${other_params}">
+						Previous </a></li>
+
+				<li th:each="count: ${#numbers.sequence(1, page_count)}"
+					th:class="${pageNumber} == ${count} ? 'page-item pe-2 active' : 'page-item pe-2'">
+					<a class="page-link" th:href="'?pg=' + ${count} + ${other_params}"
+					th:text="${count}"></a>
+				</li>
+
+				<li class="page-item pe-2" th:if="${pageNumber} < ${page_count}">
+					<a class="page-link"
+					th:href="'?pg=' + (${pageNumber} + 1) + ${other_params}"> Next
+				</a>
+				</li>
+			</ul>
+
+			<!-- N > 8 and pg in the query -->
+			<ul th:if="${page_count} > 8 AND ${pagenumber} >= 1"
+				class="pagination justify-content-center pt-2 pb-2">
+				<li class="page-item pe-2" th:if="${pageNumber} > 1"><a
+					class="page-link"
+					th:href="'?pg=' + (${pageNumber} - 1) + ${other_params}">
+						Previous </a></li>
+
+				<li
+					th:class="${pageNumber} == 1 ? 'page-item pe-2 active' : 'page-item pe-2'">
+					<a class="page-link" th:href="'?pg=1' + ${other_params}"> 1 </a>
+				</li>
+
+				<li th:if="${midstart} > 2" class="page-item pe-2"><span
+					class="col-form-label-lg">...</span></li>
+
+				<li th:each="count : ${#numbers.sequence(midstart, midend)}"
+					th:class="${pageNumber} == ${count} ? 'page-item pe-2 active' : 'page-item pe-2'">
+					<a class="page-link" th:href="'?pg=' + ${count} + ${other_params}"
+					th:text="${count}"></a>
+				</li>
+
+				<li th:if="${midend} < ${page_count} - 1" class="page-item pe-2">
+					<span class="col-form-label-lg">...</span>
+				</li>
+
+				<li
+					th:class="${pageNumber} == ${page_count} ? 'page-item pe-2 active' : 'page-item pe-2'">
+					<a class="page-link"
+					th:href="'?pg=' + ${page_count} + ${other_params}"
+					th:text="${page_count}"></a>
+				</li>
+
+				<li class="page-item pe-2" th:if="${pageNumber} < ${page_count}">
+					<a class="page-link"
+					th:href="'?pg=' + (${pageNumber} + 1) + ${other_params}"> Next
+				</a>
+				</li>
+			</ul>
+
+			<!-- N > 8 and no pg in the query -->
+			<ul th:if="${page_count} > 8 AND ${pagenumber} == 1"
+				class="pagination justify-content-center pt-2 pb-2">
+				<li class="page-item pe-2 active"><a class="page-link"
+					th:href="'?pg=1' + ${other_params}"> 1 </a></li>
+				<li class="page-item pe-2"><a class="page-link"
+					th:href="'?pg=2' + ${other_params}"> 2 </a></li>
+				<li class="page-item pe-2"><label class="col-form-label-lg">....</label>
+				</li>
+				<li class="page-item pe-2"><a class="page-link"
+					th:href="'?pg=' + (${page_count} - 1) + ${other_params}"
+					th:text="${page_count} - 1"></a></li>
+				<li class="page-item pe-2"><a class="page-link"
+					th:href="'?pg=' + ${page_count} + ${other_params}"
+					th:text="${page_count}"></a></li>
+				<li class="page-item pe-2"><a class="page-link"
+					th:href="'?pg=2' + ${other_params}"> Next </a></li>
+			</ul>
+		</nav>
+
+	</div>
+
+	<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+</body>
+</html>
